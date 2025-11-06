@@ -1,18 +1,13 @@
-graphqomb_adapter パッケージ
-============================
-
-graphqomb_adapter package
+graphqomb_adapter Package
 =========================
-
-このパッケージは、GraphQOMBとの統合を提供します。
 
 This package provides integration with GraphQOMB.
 
-サブモジュール / Submodules
----------------------------
+Submodules
+----------
 
-graphqomb_adapter.converter モジュール
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+graphqomb_adapter.converter Module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: graphqomb_adapter.converter
    :members:

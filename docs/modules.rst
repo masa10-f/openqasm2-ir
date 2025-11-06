@@ -1,27 +1,24 @@
-モジュール一覧
-==============
-
 Module Reference
 ================
 
-qasm2 パッケージ
-----------------
+qasm2 Package
+-------------
 
 .. toctree::
    :maxdepth: 4
 
    qasm2
 
-ir パッケージ
--------------
+ir Package
+----------
 
 .. toctree::
    :maxdepth: 4
 
    ir
 
-graphqomb_adapter パッケージ
-----------------------------
+graphqomb_adapter Package
+-------------------------
 
 .. toctree::
    :maxdepth: 4

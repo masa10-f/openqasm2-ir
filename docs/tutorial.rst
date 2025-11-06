@@ -1,20 +1,13 @@
-チュートリアル
-==============
-
-このチュートリアルでは、qasm2graphqombの基本的な使い方から応用まで、ステップバイステップで解説します。
-
 Tutorial
 ========
 
 This tutorial provides step-by-step guidance on using qasm2graphqomb, from basics to advanced usage.
 
-基本的なワークフロー / Basic Workflow
--------------------------------------
+Basic Workflow
+--------------
 
-1. OpenQASM 2.0のパース / Parsing OpenQASM 2.0
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-OpenQASM 2.0のソースコードをパースして、ASTを取得します。
+1. Parsing OpenQASM 2.0
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Parse OpenQASM 2.0 source code to obtain an AST.
 
@@ -22,7 +15,7 @@ Parse OpenQASM 2.0 source code to obtain an AST.
 
    from qasm2.parser import parse_qasm, parse_qasm_file
 
-   # 文字列からパース / Parse from string
+   # Parse from string
    qasm_code = """
    OPENQASM 2.0;
    include "qelib1.inc";
@@ -34,20 +27,18 @@ Parse OpenQASM 2.0 source code to obtain an AST.
    """
    ast = parse_qasm(qasm_code)
 
-   # ファイルからパース / Parse from file
+   # Parse from file
    ast = parse_qasm_file("circuit.qasm")
 
-   # ASTの内容を確認 / Inspect AST contents
+   # Inspect AST contents
    print(f"OpenQASM version: {ast.version}")
    print(f"Quantum registers: {ast.qregs}")
    print(f"Classical registers: {ast.cregs}")
    print(f"Gate definitions: {list(ast.gate_defs.keys())}")
    print(f"Operations: {len(ast.body)}")
 
-2. 中間表現（IR）への変換 / Converting to IR
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-ASTを効率的な中間表現（IR）に変換します。
+2. Converting to IR
+~~~~~~~~~~~~~~~~~~~
 
 Convert the AST to an efficient intermediate representation (IR).
 
@@ -55,21 +46,19 @@ Convert the AST to an efficient intermediate representation (IR).
 
    from qasm2.lower import lower_program
 
-   # ASTをIRに変換 / Convert AST to IR
+   # Convert AST to IR
    circuit = lower_program(ast)
 
-   # 回路の情報を取得 / Get circuit information
+   # Get circuit information
    print(f"Number of qubits: {circuit.n_qubits}")
    print(f"Number of operations: {len(circuit.ops)}")
 
-   # 各操作の詳細を確認 / Inspect operation details
+   # Inspect operation details
    for i, op in enumerate(circuit.ops):
        print(f"Op {i}: {op.name} on qubits {op.qubits} with params {op.params}")
 
-3. 回路の保存と読み込み / Saving and Loading Circuits
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-IRをJSON形式で保存・読み込みできます。
+3. Saving and Loading Circuits
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can save and load IR in JSON format.
 
@@ -77,23 +66,21 @@ You can save and load IR in JSON format.
 
    from ir.circuit import Circuit
 
-   # JSON形式で保存 / Save as JSON
+   # Save as JSON
    circuit.to_json("circuit.json")
 
-   # JSONから読み込み / Load from JSON
+   # Load from JSON
    loaded_circuit = Circuit.from_json("circuit.json")
 
-   # 辞書形式でも扱える / Can also work with dictionaries
+   # Can also work with dictionaries
    circuit_dict = circuit.to_dict()
    restored_circuit = Circuit.from_dict(circuit_dict)
 
-実践例 / Practical Examples
----------------------------
+Practical Examples
+------------------
 
-ベル状態の生成 / Creating a Bell State
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-2量子ビットのベル状態を生成する回路を作成します。
+Creating a Bell State
+~~~~~~~~~~~~~~~~~~~~~
 
 Create a circuit that generates a two-qubit Bell state.
 
@@ -102,7 +89,6 @@ Create a circuit that generates a two-qubit Bell state.
    from qasm2.parser import parse_qasm
    from qasm2.lower import lower_program
 
-   # ベル状態を生成するOpenQASMコード
    # OpenQASM code to generate a Bell state
    bell_state_qasm = """
    OPENQASM 2.0;
@@ -114,7 +100,7 @@ Create a circuit that generates a two-qubit Bell state.
    measure q -> c;
    """
 
-   # パースと変換 / Parse and convert
+   # Parse and convert
    ast = parse_qasm(bell_state_qasm)
    circuit = lower_program(ast)
 
@@ -123,10 +109,8 @@ Create a circuit that generates a two-qubit Bell state.
    for op in circuit.ops:
        print(f"  {op.name} on qubits {op.qubits}")
 
-量子フーリエ変換 / Quantum Fourier Transform
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-3量子ビットの量子フーリエ変換を実装します。
+Quantum Fourier Transform
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Implement a 3-qubit Quantum Fourier Transform.
 
@@ -158,10 +142,8 @@ Implement a 3-qubit Quantum Fourier Transform.
    print("QFT Circuit:")
    print(f"  Total operations: {len(circuit.ops)}")
 
-カスタムゲートの定義 / Defining Custom Gates
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-独自のゲートを定義して使用します。
+Defining Custom Gates
+~~~~~~~~~~~~~~~~~~~~~
 
 Define and use custom gates.
 
@@ -171,7 +153,7 @@ Define and use custom gates.
    OPENQASM 2.0;
    include "qelib1.inc";
 
-   // カスタムゲートの定義 / Define custom gate
+   // Define custom gate
    gate my_gate(theta, phi) q {
        rx(theta) q;
        ry(phi) q;
@@ -179,7 +161,7 @@ Define and use custom gates.
 
    qreg q[2];
 
-   // カスタムゲートの使用 / Use custom gate
+   // Use custom gate
    my_gate(pi/4, pi/2) q[0];
    my_gate(pi/3, pi/6) q[1];
    """
@@ -191,10 +173,8 @@ Define and use custom gates.
    for op in circuit.ops:
        print(f"{op.name}: qubits={op.qubits}, params={op.params}")
 
-GraphQOMBへの変換 / Converting to GraphQOMB
--------------------------------------------
-
-GraphQOMB形式への変換を行います。
+Converting to GraphQOMB
+-----------------------
 
 Convert to GraphQOMB format.
 
@@ -204,7 +184,6 @@ Convert to GraphQOMB format.
    from qasm2.lower import lower_program
    from graphqomb_adapter.converter import circuit_to_graphqomb
 
-   # 量子回路をパースしてIRに変換
    # Parse quantum circuit and convert to IR
    qasm_code = """
    OPENQASM 2.0;
@@ -218,32 +197,26 @@ Convert to GraphQOMB format.
    ast = parse_qasm(qasm_code)
    circuit = lower_program(ast)
 
-   # GraphQOMB形式に変換 / Convert to GraphQOMB format
+   # Convert to GraphQOMB format
    graphqomb_circuit = circuit_to_graphqomb(circuit)
 
    print(f"GraphQOMB circuit created with {graphqomb_circuit.nqubits} qubits")
 
-コマンドラインツールの使用 / Using CLI Tools
---------------------------------------------
-
-コマンドラインから直接変換を行うこともできます。
+Using CLI Tools
+---------------
 
 You can also perform conversions directly from the command line.
 
 .. code-block:: bash
 
-   # OpenQASMファイルをJSON形式のIRに変換
    # Convert OpenQASM file to JSON IR
    qasm-import input.qasm -o output.json
 
-   # 標準出力に出力
    # Output to stdout
    qasm-import input.qasm
 
-エラーハンドリング / Error Handling
------------------------------------
-
-パースエラーや検証エラーを適切に処理します。
+Error Handling
+--------------
 
 Handle parsing and validation errors appropriately.
 
@@ -255,7 +228,7 @@ Handle parsing and validation errors appropriately.
    invalid_qasm = """
    OPENQASM 2.0;
    qreg q[2];
-   unknown_gate q[0];  // 未定義のゲート / Undefined gate
+   unknown_gate q[0];  // Undefined gate
    """
 
    try:
@@ -264,13 +237,11 @@ Handle parsing and validation errors appropriately.
        print(f"Error {e.code} at line {e.line}, column {e.column}:")
        print(f"  {e.message}")
 
-高度な使い方 / Advanced Usage
-----------------------------
+Advanced Usage
+--------------
 
-回路の検証 / Circuit Validation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-正規化と検証を行います。
+Circuit Validation
+~~~~~~~~~~~~~~~~~~
 
 Perform normalization and validation.
 
@@ -282,16 +253,14 @@ Perform normalization and validation.
 
    ast = parse_qasm(qasm_code)
 
-   # 正規化 / Normalize
+   # Normalize
    normalized_ast = normalize_program(ast)
 
-   # 検証 / Validate
+   # Validate
    validate_program(normalized_ast)
 
-回路の操作 / Circuit Manipulation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-IR形式で回路を操作します。
+Circuit Manipulation
+~~~~~~~~~~~~~~~~~~~~
 
 Manipulate circuits in IR format.
 
@@ -300,7 +269,7 @@ Manipulate circuits in IR format.
    from ir.circuit import Circuit, Op
    import math
 
-   # 新しい回路を作成 / Create a new circuit
+   # Create a new circuit
    ops = [
        Op(name="h", qubits=[0], params=()),
        Op(name="rx", qubits=[0], params=(math.pi/4,)),
@@ -313,7 +282,7 @@ Manipulate circuits in IR format.
        meas_map=[(0, 0), (1, 1)]
    )
 
-   # 操作の追加 / Add operations
+   # Add operations
    new_ops = circuit.ops + [Op(name="h", qubits=[1], params=())]
    modified_circuit = Circuit(
        n_qubits=circuit.n_qubits,
@@ -321,20 +290,16 @@ Manipulate circuits in IR format.
        meas_map=circuit.meas_map
    )
 
-まとめ / Summary
----------------
-
-このチュートリアルでは以下を学びました：
+Summary
+-------
 
 This tutorial covered:
 
-1. OpenQASM 2.0のパースと検証 / Parsing and validating OpenQASM 2.0
-2. 中間表現（IR）への変換 / Converting to Intermediate Representation (IR)
-3. 回路の保存と読み込み / Saving and loading circuits
-4. GraphQOMBへの変換 / Converting to GraphQOMB
-5. コマンドラインツールの使用 / Using CLI tools
-6. エラーハンドリングと高度な操作 / Error handling and advanced operations
-
-さらに詳しい情報は :doc:`api` を参照してください。
+1. Parsing and validating OpenQASM 2.0
+2. Converting to Intermediate Representation (IR)
+3. Saving and loading circuits
+4. Converting to GraphQOMB
+5. Using CLI tools
+6. Error handling and advanced operations
 
 For more detailed information, see the :doc:`api` reference.

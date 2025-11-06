@@ -1,18 +1,13 @@
-ir パッケージ
-=============
-
-ir package
+ir Package
 ==========
-
-このパッケージは、量子回路の中間表現を提供します。
 
 This package provides intermediate representation for quantum circuits.
 
-サブモジュール / Submodules
----------------------------
+Submodules
+----------
 
-ir.circuit モジュール
-~~~~~~~~~~~~~~~~~~~~~
+ir.circuit Module
+~~~~~~~~~~~~~~~~~
 
 .. automodule:: ir.circuit
    :members:

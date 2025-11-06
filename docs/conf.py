@@ -63,7 +63,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # Language
-language = "ja"
+language = "en"
 
 # Exclude patterns
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

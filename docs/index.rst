@@ -1,65 +1,64 @@
-qasm2graphqomb ドキュメント
-================================
+qasm2graphqomb Documentation
+============================
 
-**qasm2graphqomb** は、OpenQASM 2.0のソースコードを解析し、カスタム中間表現（IR）に変換するPythonライブラリです。
-量子回路の操作、検証、GraphQOMBとの統合をサポートします。
+**qasm2graphqomb** is a Python library for parsing OpenQASM 2.0 source code and converting it to a custom intermediate representation (IR). It supports quantum circuit manipulation, validation, and integration with GraphQOMB.
 
 .. toctree::
    :maxdepth: 2
-   :caption: 目次:
+   :caption: Contents:
 
    tutorial
    api
    modules
 
-主な機能
+Features
 --------
 
-* **OpenQASM 2.0パーサー**: 完全なOpenQASM 2.0構文サポート
-* **中間表現（IR）**: 量子回路の効率的な表現と操作
-* **GraphQOMB統合**: GraphQOMBへのシームレスな変換
-* **型安全性**: 静的型チェックによる信頼性の高い開発
-* **CLIツール**: コマンドラインからの簡単な利用
+* **OpenQASM 2.0 Parser**: Full OpenQASM 2.0 syntax support
+* **Intermediate Representation (IR)**: Efficient representation and manipulation of quantum circuits
+* **GraphQOMB Integration**: Seamless conversion to GraphQOMB
+* **Type Safety**: Reliable development with static type checking
+* **CLI Tools**: Easy command-line usage
 
-クイックスタート
-----------------
+Quick Start
+-----------
 
-インストール
+Installation
 ~~~~~~~~~~~~
 
 .. code-block:: bash
 
    pip install qasm2graphqomb
 
-基本的な使い方
-~~~~~~~~~~~~~~
+Basic Usage
+~~~~~~~~~~~
 
-OpenQASM 2.0ファイルをパースして中間表現に変換：
+Parse an OpenQASM 2.0 file and convert it to intermediate representation:
 
 .. code-block:: python
 
    from qasm2.parser import parse_qasm_file
    from qasm2.lower import lower_program
 
-   # OpenQASMファイルをパース
+   # Parse OpenQASM file
    ast = parse_qasm_file("circuit.qasm")
 
-   # 中間表現（IR）に変換
+   # Convert to IR
    circuit = lower_program(ast)
 
-   # 量子回路の情報を取得
-   print(f"量子ビット数: {circuit.n_qubits}")
-   print(f"操作数: {len(circuit.ops)}")
+   # Get circuit information
+   print(f"Number of qubits: {circuit.n_qubits}")
+   print(f"Number of operations: {len(circuit.ops)}")
 
-コマンドラインツール
-~~~~~~~~~~~~~~~~~~~~
+Command Line Tool
+~~~~~~~~~~~~~~~~~
 
 .. code-block:: bash
 
-   # OpenQASMファイルをJSON形式のIRに変換
+   # Convert OpenQASM file to JSON IR
    qasm-import input.qasm -o output.json
 
-インデックスと検索
+Indices and Search
 ------------------
 
 * :ref:`genindex`
