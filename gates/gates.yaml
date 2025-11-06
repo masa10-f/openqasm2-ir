@@ -1,0 +1,110 @@
+units: rad
+
+primitives:
+  RX:
+    arity: 1
+    params: [theta]
+  RY:
+    arity: 1
+    params: [theta]
+  RZ:
+    arity: 1
+    params: [phi]
+  CX:
+    arity: 2
+    params: []
+  CZ:
+    arity: 2
+    params: []
+  SWAP:
+    arity: 2
+    params: []
+  CRZ:
+    arity: 2
+    params: [phi]
+  CRX:
+    arity: 2
+    params: [phi]
+  CU3:
+    arity: 2
+    params: [theta, phi, lam]
+  CCX:
+    arity: 3
+    params: []
+  CCZ:
+    arity: 3
+    params: []
+
+mappings:
+  rx:
+    params: [theta]
+    map: {op: RX, qubits: ["q0"], args: ["{theta}"]}
+  ry:
+    params: [theta]
+    map: {op: RY, qubits: ["q0"], args: ["{theta}"]}
+  rz:
+    params: [phi]
+    map: {op: RZ, qubits: ["q0"], args: ["{phi}"]}
+  h:
+    params: []
+    expand:
+      - {op: RZ, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
+      - {op: RY, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
+      - {op: RZ, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
+  x:
+    params: []
+    expand:
+      - {op: RX, qubits: ["q0"], args: ["3.141592653589793"]}  # pi rotation
+  y:
+    params: []
+    expand:
+      - {op: RY, qubits: ["q0"], args: ["3.141592653589793"]}  # pi rotation
+  z:
+    params: []
+    expand:
+      - {op: RZ, qubits: ["q0"], args: ["3.141592653589793"]}  # pi rotation
+  s:
+    params: []
+    expand:
+      - {op: RZ, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 phase
+  t:
+    params: []
+    expand:
+      - {op: RZ, qubits: ["q0"], args: ["0.7853981633974483"]}  # pi/4 phase
+  tdg:
+    params: []
+    expand:
+      - {op: RZ, qubits: ["q0"], args: ["-0.7853981633974483"]}  # -pi/4 phase
+  cx:
+    params: []
+    map: {op: CX, qubits: ["q0", "q1"], args: []}
+  cz:
+    params: []
+    map: {op: CZ, qubits: ["q0", "q1"], args: []}
+  cy:
+    params: []
+    expand:
+      - {op: RZ, qubits: ["q1"], args: ["1.5707963267948966"]}  # apply S on target
+      - {op: CX, qubits: ["q0", "q1"], args: []}
+      - {op: RZ, qubits: ["q1"], args: ["-1.5707963267948966"]}  # apply Sdg on target
+  ch:
+    params: []
+    map: {op: CU3, qubits: ["q0", "q1"], args: ["1.5707963267948966", "0.0", "3.141592653589793"]}
+  swap:
+    params: []
+    map: {op: SWAP, qubits: ["q0", "q1"], args: []}
+  crz:
+    params: [phi]
+    map: {op: CRZ, qubits: ["q0", "q1"], args: ["{phi}"]}
+  crx:
+    params: [phi]
+    map: {op: CRX, qubits: ["q0", "q1"], args: ["{phi}"]}
+  cu3:
+    params: [theta, phi, lam]
+    map: {op: CU3, qubits: ["q0", "q1"], args: ["{theta}", "{phi}", "{lam}"]}
+  ccx:
+    params: []
+    map: {op: CCX, qubits: ["q0", "q1", "q2"], args: []}
+  ccz:
+    params: []
+    map: {op: CCZ, qubits: ["q0", "q1", "q2"], args: []}
