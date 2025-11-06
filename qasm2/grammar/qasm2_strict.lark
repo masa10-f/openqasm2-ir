@@ -1,0 +1,83 @@
+// OpenQASM 2.0 Strict Grammar
+// Parses basic OpenQASM 2.0 syntax including forbidden constructs for better error messages
+
+// Top-level structure
+start: header include* decl* stmt*
+
+header: "OPENQASM" NUMBER ";"
+include: "include" STRING ";"
+
+// Declarations
+decl: qreg | creg | gate_decl
+qreg: "qreg" CNAME "[" INT "]" ";"
+creg: "creg" CNAME "[" INT "]" ";"
+
+// Gate definition
+gate_decl: "gate" CNAME gate_params? gate_args "{" gate_body* "}"
+gate_params: "(" param_id ("," param_id)* ")"
+param_id: CNAME
+gate_args: id_ref ("," id_ref)*
+id_ref: CNAME
+
+gate_body: (uop | cx | gate_call | barrier) ";"
+gate_call: CNAME gate_call_params? id_list
+gate_call_params: "(" expr ("," expr)* ")"
+id_list: id_atom ("," id_atom)*
+id_atom: CNAME ("[" INT "]")?
+
+// Statements (includes forbidden constructs for error reporting)
+stmt: uop ";"
+    | cx ";"
+    | gate_call ";"
+    | barrier ";"
+    | measure ";"
+    | if_stmt
+    | reset_stmt ";"
+
+// Built-in gate operations
+uop: GATE_NAME call_params? qarg
+GATE_NAME: "u3"|"u2"|"u1"|"rx"|"ry"|"rz"|"p"|"x"|"y"|"z"|"h"|"s"|"sdg"|"t"|"tdg"|"id"|"sx"|"sxdg"|"swap"|"cz"|"ccx"|"cswap"
+
+cx: "cx" qarg "," qarg
+barrier: "barrier" qarg_list
+measure: "measure" qarg "->" carg
+
+// Forbidden constructs (parsed for better error messages)
+reset_stmt: "reset" qarg
+if_stmt: "if" "(" CNAME "==" INT ")" stmt
+
+// Quantum and classical arguments
+qarg_list: qarg ("," qarg)*
+qarg: CNAME ("[" INT "]")?
+carg: CNAME ("[" INT "]")?
+
+call_params: "(" expr ("," expr)* ")"
+
+// Arithmetic expressions (priority-based)
+?expr: sum
+?sum: product
+    | sum "+" product   -> add
+    | sum "-" product   -> sub
+?product: power
+    | product "*" power -> mul
+    | product "/" power -> div
+?power: unary
+    | power "^" unary   -> pow
+?unary: atom
+    | "-" atom          -> neg
+?atom: NUMBER           -> number
+    | "pi"              -> pi
+    | CNAME "(" expr ")" -> fun1
+    | CNAME             -> param_ref
+    | "(" expr ")"
+
+// Terminals
+NUMBER: /\d+(\.\d+)?([eE][+-]?\d+)?/
+INT: /\d+/
+CNAME: /[a-zA-Z_][a-zA-Z_0-9]*/
+STRING: ESCAPED_STRING
+
+%import common.ESCAPED_STRING
+%import common.WS
+%ignore WS
+%ignore /\/\/[^\n]*/   // Single-line comments

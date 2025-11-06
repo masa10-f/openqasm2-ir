@@ -65,7 +65,7 @@ class QasmTransformer(Transformer):
         super().__init__()
         self._reset_state()
 
-    def transform(self, tree: Tree) -> ProgramAST:  # type: ignore[override]
+    def transform(self, tree: Tree) -> ProgramAST:
         """Perform the tree-to-AST conversion."""
         if not isinstance(tree, Tree) or tree.data != "start":
             raise ValueError("Transformation requires the `start` rule as entry point.")
@@ -344,7 +344,16 @@ class QasmTransformer(Transformer):
         values: List[float] = []
         for child in node.children:
             if isinstance(child, (Tree, Token)):
-                values.append(float(expr_eval.evaluate(child)))
+                # In gate definition context, preserve symbolic parameter names as strings
+                # They will be substituted during normalization
+                if self._gate_context and isinstance(child, Tree) and child.data == "param_ref":
+                    if child.children and isinstance(child.children[0], Token):
+                        param_name = child.children[0].value
+                        values.append(param_name)  # normalize.py expects str for symbolic params
+                    else:
+                        values.append(0.0)
+                else:
+                    values.append(float(expr_eval.evaluate(child)))
         return values
 
     def _build_qref(self, node: Tree) -> QRef:
@@ -455,7 +464,7 @@ def create_parser() -> Lark:
         grammar_text = importlib_resources.files(_GRAMMAR_PACKAGE).joinpath(_GRAMMAR_FILE).read_text(encoding="utf-8")
     except (AttributeError, FileNotFoundError, ModuleNotFoundError):
         try:
-            grammar_text = importlib_resources.read_text(_GRAMMAR_PACKAGE, _GRAMMAR_FILE, encoding="utf-8")  # type: ignore[arg-type]
+            grammar_text = importlib_resources.read_text(_GRAMMAR_PACKAGE, _GRAMMAR_FILE, encoding="utf-8")
         except (FileNotFoundError, ModuleNotFoundError, UnicodeDecodeError):
             grammar_path = Path(__file__).with_name("grammar").joinpath(_GRAMMAR_FILE)
             grammar_text = grammar_path.read_text(encoding="utf-8")

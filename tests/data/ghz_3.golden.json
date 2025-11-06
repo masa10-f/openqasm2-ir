@@ -1,0 +1,35 @@
+{
+  "n_qubits": 3,
+  "ops": [
+    {
+      "name": "RZ",
+      "qubits": [0],
+      "params": [1.5707963267948966]
+    },
+    {
+      "name": "RY",
+      "qubits": [0],
+      "params": [1.5707963267948966]
+    },
+    {
+      "name": "RZ",
+      "qubits": [0],
+      "params": [1.5707963267948966]
+    },
+    {
+      "name": "CX",
+      "qubits": [0, 1],
+      "params": []
+    },
+    {
+      "name": "CX",
+      "qubits": [1, 2],
+      "params": []
+    }
+  ],
+  "meas_map": [
+    [0, 0],
+    [1, 1],
+    [2, 2]
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "n_qubits": 3,
+  "ops": [
+    {
+      "name": "CX",
+      "qubits": [0, 1],
+      "params": []
+    },
+    {
+      "name": "CZ",
+      "qubits": [1, 2],
+      "params": []
+    },
+    {
+      "name": "RZ",
+      "qubits": [2],
+      "params": [1.5707963267948966]
+    },
+    {
+      "name": "CX",
+      "qubits": [0, 2],
+      "params": []
+    },
+    {
+      "name": "RZ",
+      "qubits": [2],
+      "params": [-1.5707963267948966]
+    },
+    {
+      "name": "CU3",
+      "qubits": [0, 1],
+      "params": [1.5707963267948966, 0.0, 3.141592653589793]
+    },
+    {
+      "name": "SWAP",
+      "qubits": [1, 2],
+      "params": []
+    }
+  ],
+  "meas_map": [
+    [0, 0],
+    [1, 1],
+    [2, 2]
+  ]
+}

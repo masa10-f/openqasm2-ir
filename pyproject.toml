@@ -24,6 +24,25 @@ dev = [
 [project.scripts]
 qasm-import = "qasm2.cli:main"
 
+[tool.setuptools]
+packages = ["qasm2", "qasm2.grammar", "ir", "graphqomb_adapter"]
+
+[tool.setuptools.package-data]
+qasm2 = ["grammar/*.lark"]
+"*" = ["*.yaml"]
+
+[tool.mypy]
+warn_return_any = false
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = "graphqomb.*"
+ignore_missing_imports = true
+
+[tool.pyright]
+reportMissingImports = "none"
+reportMissingModuleSource = "none"
+
 [tool.ruff]
 target-version = "py39"
 line-length = 120
