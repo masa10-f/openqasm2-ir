@@ -20,6 +20,10 @@ dev = [
     "pyright",
     "ruff",
 ]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme",
+]
 
 [project.scripts]
 qasm-import = "qasm2.cli:main"
