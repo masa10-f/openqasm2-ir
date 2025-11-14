@@ -75,6 +75,18 @@ mappings:
     params: []
     expand:
       - {op: RZ, qubits: ["q0"], args: ["-0.7853981633974483"]}  # -pi/4 phase
+  sx:
+    params: []
+    expand:
+      - {op: RX, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation (sqrt X)
+  sxdg:
+    params: []
+    expand:
+      - {op: RX, qubits: ["q0"], args: ["-1.5707963267948966"]}  # -pi/2 rotation (sqrt X dagger)
+  sdg:
+    params: []
+    expand:
+      - {op: RZ, qubits: ["q0"], args: ["-1.5707963267948966"]}  # -pi/2 phase (S dagger)
   cx:
     params: []
     map: {op: CX, qubits: ["q0", "q1"], args: []}
