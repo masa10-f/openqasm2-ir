@@ -44,10 +44,19 @@ Convert the AST to an efficient intermediate representation (IR).
 
 .. code-block:: python
 
-   from qasm2.lower import lower_program
+   from qasm2.normalize import normalize_program
+   from qasm2.lower import load_gate_mappings, lower_to_ir
+   from pathlib import Path
 
-   # Convert AST to IR
-   circuit = lower_program(ast)
+   # Normalize the AST (expand user-defined gates and normalize builtins)
+   normalized_ast = normalize_program(ast)
+
+   # Load gate mappings from YAML configuration
+   # Adjust the path to where gates.yaml is located in your installation
+   gate_mappings = load_gate_mappings("gates/gates.yaml")
+
+   # Convert normalized AST to IR
+   circuit = lower_to_ir(normalized_ast, gate_mappings)
 
    # Get circuit information
    print(f"Number of qubits: {circuit.n_qubits}")
@@ -87,7 +96,8 @@ Create a circuit that generates a two-qubit Bell state.
 .. code-block:: python
 
    from qasm2.parser import parse_qasm
-   from qasm2.lower import lower_program
+   from qasm2.normalize import normalize_program
+   from qasm2.lower import load_gate_mappings, lower_to_ir
 
    # OpenQASM code to generate a Bell state
    bell_state_qasm = """
@@ -102,7 +112,9 @@ Create a circuit that generates a two-qubit Bell state.
 
    # Parse and convert
    ast = parse_qasm(bell_state_qasm)
-   circuit = lower_program(ast)
+   normalized_ast = normalize_program(ast)
+   gate_mappings = load_gate_mappings("gates/gates.yaml")
+   circuit = lower_to_ir(normalized_ast, gate_mappings)
 
    print("Bell State Circuit:")
    print(f"  Qubits: {circuit.n_qubits}")
@@ -137,7 +149,9 @@ Implement a 3-qubit Quantum Fourier Transform.
    """
 
    ast = parse_qasm(qft3_qasm)
-   circuit = lower_program(ast)
+   normalized_ast = normalize_program(ast)
+   gate_mappings = load_gate_mappings("gates/gates.yaml")
+   circuit = lower_to_ir(normalized_ast, gate_mappings)
 
    print("QFT Circuit:")
    print(f"  Total operations: {len(circuit.ops)}")
@@ -169,7 +183,11 @@ Define and use custom gates.
    ast = parse_qasm(custom_gate_qasm)
    print(f"Defined gates: {list(ast.gate_defs.keys())}")
 
-   circuit = lower_program(ast)
+   # Normalize expands user-defined gates
+   normalized_ast = normalize_program(ast)
+   gate_mappings = load_gate_mappings("gates/gates.yaml")
+   circuit = lower_to_ir(normalized_ast, gate_mappings)
+
    for op in circuit.ops:
        print(f"{op.name}: qubits={op.qubits}, params={op.params}")
 
@@ -181,7 +199,8 @@ Convert to GraphQOMB format.
 .. code-block:: python
 
    from qasm2.parser import parse_qasm
-   from qasm2.lower import lower_program
+   from qasm2.normalize import normalize_program
+   from qasm2.lower import load_gate_mappings, lower_to_ir
    from graphqomb_adapter.converter import circuit_to_graphqomb
 
    # Parse quantum circuit and convert to IR
@@ -195,7 +214,9 @@ Convert to GraphQOMB format.
    """
 
    ast = parse_qasm(qasm_code)
-   circuit = lower_program(ast)
+   normalized_ast = normalize_program(ast)
+   gate_mappings = load_gate_mappings("gates/gates.yaml")
+   circuit = lower_to_ir(normalized_ast, gate_mappings)
 
    # Convert to GraphQOMB format
    graphqomb_circuit = circuit_to_graphqomb(circuit)
@@ -243,21 +264,21 @@ Advanced Usage
 Circuit Validation
 ~~~~~~~~~~~~~~~~~~
 
-Perform normalization and validation.
+Perform validation and normalization. Validation should be done before normalization.
 
 .. code-block:: python
 
    from qasm2.parser import parse_qasm
-   from qasm2.normalize import normalize_program
    from qasm2.validate import validate_program
+   from qasm2.normalize import normalize_program
 
    ast = parse_qasm(qasm_code)
 
-   # Normalize
-   normalized_ast = normalize_program(ast)
+   # Validate first (checks syntax and semantic correctness)
+   validate_program(ast)
 
-   # Validate
-   validate_program(normalized_ast)
+   # Then normalize (expands user-defined gates)
+   normalized_ast = normalize_program(ast)
 
 Circuit Manipulation
 ~~~~~~~~~~~~~~~~~~~~
