@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.resources as importlib_resources
 import re
 from pathlib import Path
 from typing import Dict, List
@@ -14,6 +15,7 @@ from qasm2.errors import QasmGraphIntegrationError
 from qasm2.parser import parse_qasm
 
 __all__ = [
+    "load_default_gate_mappings",
     "load_gate_mappings",
     "lower_to_ir",
     "flatten_qref",
@@ -23,6 +25,64 @@ __all__ = [
 ]
 
 _PLACEHOLDER_PATTERN = re.compile(r"\{([^{}]+)\}")
+
+
+def load_default_gate_mappings() -> dict:
+    """Load the default gate mappings from the packaged gates.yaml resource.
+
+    This is a convenience function that locates and loads the default gate
+    mapping configuration without requiring the user to specify a path.
+
+    Returns
+    -------
+    dict
+        Parsed YAML content describing the gate set.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the gates.yaml resource cannot be located.
+    ValueError
+        If the file contents cannot be parsed into a dictionary.
+
+    Examples
+    --------
+    >>> from qasm2.lower import load_default_gate_mappings, lower_to_ir
+    >>> from qasm2.normalize import normalize_program
+    >>> gate_mappings = load_default_gate_mappings()
+    >>> circuit = lower_to_ir(normalized_ast, gate_mappings)
+    """
+    # Try to locate and read gates.yaml as a packaged resource
+    candidates = ("gates", "qasm2.gates", "qasm2")
+    for package in candidates:
+        try:
+            root = importlib_resources.files(package)
+        except (ModuleNotFoundError, AttributeError, TypeError):
+            continue
+        candidate = root.joinpath("gates.yaml")
+        try:
+            if candidate.is_file():
+                content = candidate.read_text(encoding="utf-8")
+                data = yaml.safe_load(content)
+                if not isinstance(data, dict):
+                    raise ValueError(f"Gate mapping must contain a mapping at the top level.")
+                return data
+        except (AttributeError, FileNotFoundError):
+            continue
+
+    # Fallback to development tree location
+    local_fallback = Path(__file__).resolve().parent.parent / "gates" / "gates.yaml"
+    if local_fallback.exists():
+        content = local_fallback.read_text(encoding="utf-8")
+        data = yaml.safe_load(content)
+        if not isinstance(data, dict):
+            raise ValueError(f"Gate mapping must contain a mapping at the top level.")
+        return data
+
+    raise FileNotFoundError(
+        "Unable to locate packaged gates.yaml. "
+        "Please ensure the package is properly installed or provide an explicit path to load_gate_mappings()."
+    )
 
 
 def load_gate_mappings(yaml_path: str) -> dict:
