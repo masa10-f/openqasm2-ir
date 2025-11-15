@@ -29,11 +29,11 @@ docs = [
 qasm-import = "qasm2.cli:main"
 
 [tool.setuptools]
-packages = ["qasm2", "qasm2.grammar", "ir", "graphqomb_adapter"]
+packages = ["qasm2", "qasm2.grammar", "ir", "graphqomb_adapter", "gates"]
 
 [tool.setuptools.package-data]
 qasm2 = ["grammar/*.lark"]
-"*" = ["*.yaml"]
+gates = ["*.yaml"]
 
 [tool.mypy]
 warn_return_any = false
