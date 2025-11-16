@@ -38,6 +38,8 @@ python tket_opt_qasm.py input.qasm output_optimized.qasm --no-swaps
 
 ### Python モジュールとして
 
+#### ファイル→ファイル最適化
+
 ```python
 from optimizer import optimise_qasm_with_tket
 
@@ -52,6 +54,39 @@ optimise_qasm_with_tket(
 )
 ```
 
+#### ファイル→文字列最適化（GraphQOMB 連携に便利）
+
+```python
+from optimizer import optimise_qasm_to_string
+
+# QASM ファイルを最適化して文字列として取得
+optimized_qasm = optimise_qasm_to_string("input.qasm")
+
+# そのまま GraphQOMB や他のツールに渡せる
+from qasm2.parser import parse_qasm
+ast = parse_qasm(optimized_qasm)  # 文字列から直接パース
+```
+
+#### 文字列→文字列最適化（最も柔軟）
+
+```python
+from optimizer import optimise_qasm_string
+
+# QASM コードを文字列として最適化
+qasm_code = """OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[2];
+creg c[2];
+h q[0];
+cx q[0], q[1];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+"""
+
+optimized = optimise_qasm_string(qasm_code, allow_swaps=False)
+print(optimized)  # 最適化された QASM を出力
+```
+
 ### モジュールとして実行
 
 ```bash
@@ -59,6 +94,43 @@ optimise_qasm_with_tket(
 python -m optimizer input.qasm output_optimized.qasm
 python -m optimizer input.qasm output_optimized.qasm --no-swaps
 ```
+
+## API リファレンス
+
+### `optimise_qasm_with_tket(in_qasm_path, out_qasm_path, *, allow_swaps=True)`
+
+QASM ファイルを読み込み、最適化して別のファイルに書き出します。
+
+**引数:**
+- `in_qasm_path` (str | Path): 入力 QASM ファイルのパス
+- `out_qasm_path` (str | Path): 出力 QASM ファイルのパス
+- `allow_swaps` (bool): SWAP ゲート挿入を許可するか（デフォルト: True）
+
+**戻り値:** None
+
+### `optimise_qasm_to_string(in_qasm_path, *, allow_swaps=True)`
+
+QASM ファイルを読み込み、最適化して文字列として返します。
+
+**引数:**
+- `in_qasm_path` (str | Path): 入力 QASM ファイルのパス
+- `allow_swaps` (bool): SWAP ゲート挿入を許可するか（デフォルト: True）
+
+**戻り値:** str - 最適化された QASM コード
+
+**用途:** GraphQOMB への変換など、最適化結果をファイルに書き出さずに直接使用したい場合
+
+### `optimise_qasm_string(qasm_string, *, allow_swaps=True)`
+
+QASM 文字列を最適化して文字列として返します。
+
+**引数:**
+- `qasm_string` (str): QASM コード文字列
+- `allow_swaps` (bool): SWAP ゲート挿入を許可するか（デフォルト: True）
+
+**戻り値:** str - 最適化された QASM コード
+
+**用途:** メモリ内で QASM を処理する場合、最も柔軟な関数
 
 ## 最適化パス
 
