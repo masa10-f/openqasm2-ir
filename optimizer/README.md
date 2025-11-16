@@ -5,9 +5,14 @@ pytket を使用して OpenQASM 2.0 回路を最適化するツールです。
 ## インストール
 
 ```bash
-# pytket を含む optimizer 依存関係のインストール
-pip install -e ".[optimizer]"
+# このパッケージをインストールすると pytket も自動的にインストールされます
+pip install qasm2graphqomb
+
+# または開発モードで
+pip install -e .
 ```
+
+pytket はデフォルトの依存関係に含まれているため、追加のインストール手順は不要です。
 
 ## 使い方
 

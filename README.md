@@ -42,10 +42,9 @@ print(f"Operations: {len(circuit.ops)}")
 
 ### QASM Optimization with pytket
 
-```bash
-# Install optimizer dependencies
-pip install -e ".[optimizer]"
+The optimizer is included by default. You can use it immediately after installation:
 
+```bash
 # Optimize a QASM file
 tket-optimize-qasm input.qasm output_optimized.qasm
 
@@ -82,9 +81,6 @@ The documentation includes:
 # Install development dependencies
 pip install -e ".[dev]"
 
-# Install optimizer dependencies
-pip install -e ".[optimizer]"
-
 # Run tests
 pytest
 
@@ -98,12 +94,16 @@ ruff check .
 
 ## Optional Dependencies
 
-- **optimizer**: Install pytket for QASM circuit optimization
-  ```bash
-  pip install -e ".[optimizer]"
-  ```
 - **dev**: Install development tools (pytest, mypy, pyright, ruff)
+  ```bash
+  pip install -e ".[dev]"
+  ```
 - **docs**: Install documentation dependencies (Sphinx)
+  ```bash
+  pip install -e ".[docs]"
+  ```
+
+Note: The QASM optimizer (pytket) is now included by default.
 
 ## License
 
