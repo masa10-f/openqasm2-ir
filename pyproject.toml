@@ -24,12 +24,16 @@ docs = [
     "sphinx>=7.0",
     "sphinx-rtd-theme",
 ]
+optimizer = [
+    "pytket>=1.0.0",
+]
 
 [project.scripts]
 qasm-import = "qasm2.cli:main"
+tket-optimize-qasm = "optimizer.tket_optimizer:main"
 
 [tool.setuptools]
-packages = ["qasm2", "qasm2.grammar", "ir", "graphqomb_adapter", "gates"]
+packages = ["qasm2", "qasm2.grammar", "ir", "graphqomb_adapter", "gates", "optimizer"]
 
 [tool.setuptools.package-data]
 qasm2 = ["grammar/*.lark"]
