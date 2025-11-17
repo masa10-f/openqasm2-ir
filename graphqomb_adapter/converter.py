@@ -55,6 +55,54 @@ def _build_rz(op: Op) -> gates.Rz:
     return gates.Rz(qubit=qubit, angle=angle)
 
 
+def _build_x(op: Op) -> gates.X:
+    qubit = _require_qubits(op, 1)[0]
+    _require_params(op, 0)
+    return gates.X(qubit=qubit)
+
+
+def _build_y(op: Op) -> gates.Y:
+    qubit = _require_qubits(op, 1)[0]
+    _require_params(op, 0)
+    return gates.Y(qubit=qubit)
+
+
+def _build_z(op: Op) -> gates.Z:
+    qubit = _require_qubits(op, 1)[0]
+    _require_params(op, 0)
+    return gates.Z(qubit=qubit)
+
+
+def _build_h(op: Op) -> gates.H:
+    qubit = _require_qubits(op, 1)[0]
+    _require_params(op, 0)
+    return gates.H(qubit=qubit)
+
+
+def _build_s(op: Op) -> gates.S:
+    qubit = _require_qubits(op, 1)[0]
+    _require_params(op, 0)
+    return gates.S(qubit=qubit)
+
+
+def _build_t(op: Op) -> gates.T:
+    qubit = _require_qubits(op, 1)[0]
+    _require_params(op, 0)
+    return gates.T(qubit=qubit)
+
+
+def _build_tdg(op: Op) -> gates.Tdg:
+    qubit = _require_qubits(op, 1)[0]
+    _require_params(op, 0)
+    return gates.Tdg(qubit=qubit)
+
+
+def _build_u3(op: Op) -> gates.U3:
+    qubit = _require_qubits(op, 1)[0]
+    theta, phi, lam = _require_params(op, 3)
+    return gates.U3(qubit=qubit, angle1=theta, angle2=phi, angle3=lam)
+
+
 def _build_cx(op: Op) -> gates.CNOT:
     control, target = _require_qubits(op, 2)
     _require_params(op, 0)
@@ -107,6 +155,14 @@ _GATE_BUILDERS: dict[str, GateFactory] = {
     "RX": _build_rx,
     "RY": _build_ry,
     "RZ": _build_rz,
+    "X": _build_x,
+    "Y": _build_y,
+    "Z": _build_z,
+    "H": _build_h,
+    "S": _build_s,
+    "T": _build_t,
+    "TDG": _build_tdg,
+    "U3": _build_u3,
     "CX": _build_cx,
     "CZ": _build_cz,
     "SWAP": _build_swap,
