@@ -2,19 +2,9 @@
   "n_qubits": 3,
   "ops": [
     {
-      "name": "RZ",
+      "name": "H",
       "qubits": [0],
-      "params": [1.5707963267948966]
-    },
-    {
-      "name": "RY",
-      "qubits": [0],
-      "params": [1.5707963267948966]
-    },
-    {
-      "name": "RZ",
-      "qubits": [0],
-      "params": [1.5707963267948966]
+      "params": []
     },
     {
       "name": "CX",
