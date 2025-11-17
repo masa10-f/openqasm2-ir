@@ -25,9 +25,6 @@ primitives:
   T:
     arity: 1
     params: []
-  SX:
-    arity: 1
-    params: []
   CX:
     arity: 2
     params: []
@@ -65,10 +62,7 @@ mappings:
     map: {op: RZ, qubits: ["q0"], args: ["{phi}"]}
   h:
     params: []
-    expand:
-      - {op: RZ, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
-      - {op: RY, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
-      - {op: RZ, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
+    map: {op: H, qubits: ["q0"], args: []}
   x:
     params: []
     expand:
@@ -87,11 +81,10 @@ mappings:
     map: {op: T, qubits: ["q0"], args: []}
   tdg:
     params: []
-    expand:
-      - {op: RZ, qubits: ["q0"], args: ["-0.7853981633974483"]}  # -pi/4 phase
+    map: {op: Tdg, qubits: ["q0"], args: []}
   sx:
     params: []
-    map: {op: SX, qubits: ["q0"], args: []}
+    map: {op: RX, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation (sqrt X)
   sxdg:
     params: []
     expand:
