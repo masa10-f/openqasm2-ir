@@ -134,19 +134,32 @@ def _report_qasm_error(err: QasmError) -> None:
     print(f"Error {err.code} at line {err.line}, col {err.col}: {err.message}", file=sys.stderr)
 
 
-def _convert_to_graphqomb(ir_circuit: IRCircuit) -> GraphQOMBArtifact:
+def _convert_to_graphqomb(ir_circuit: IRCircuit, gates_yaml_path: str | None = None) -> GraphQOMBArtifact:
     """Convert the intermediate representation to a GraphQOMB circuit.
 
     This function delegates to the converter module which dynamically loads
     gate builders from gates.yaml, providing a single source of truth for
     gate conversion logic.
+
+    Parameters
+    ----------
+    ir_circuit : IRCircuit
+        The intermediate representation circuit to convert.
+    gates_yaml_path : str | None, optional
+        Path to the gate mapping YAML file. If provided, custom gate definitions
+        will be honored during conversion. If None, uses default packaged gates.
+
+    Returns
+    -------
+    GraphQOMBArtifact
+        The converted GraphQOMB circuit with measurement map.
     """
     try:
         from graphqomb_adapter.converter import ir_to_graphqomb
     except ImportError as exc:  # pragma: no cover - handled at runtime
         raise ImportError("GraphQOMB must be installed to emit graphqomb format.") from exc
 
-    graph_circuit = ir_to_graphqomb(ir_circuit)
+    graph_circuit = ir_to_graphqomb(ir_circuit, gates_yaml_path=gates_yaml_path)
     meas_map = list(ir_circuit.meas_map) if ir_circuit.meas_map is not None else None
     return GraphQOMBArtifact(circuit=graph_circuit, meas_map=meas_map)
 
@@ -231,7 +244,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if output_format == "json":
             _write_json(circuit, output_path)
         else:
-            artifact = _convert_to_graphqomb(circuit)
+            artifact = _convert_to_graphqomb(circuit, gates_yaml_path=gates_path)
             _write_graphqomb(artifact, output_path)
     except ImportError as exc:
         print(f"GraphQOMB conversion unavailable: {exc}", file=sys.stderr)

@@ -162,16 +162,20 @@ def _load_gate_builders(yaml_path: str | None = None) -> dict[str, GateFactory]:
 
 
 # Load gate builders dynamically from gates.yaml at module initialization
-_GATE_BUILDERS: dict[str, GateFactory] = _load_gate_builders()
+# This serves as the default when no custom gates.yaml is provided
+_DEFAULT_GATE_BUILDERS: dict[str, GateFactory] = _load_gate_builders()
 
 
-def ir_to_graphqomb(ir_circuit: IRCircuit) -> Circuit:
+def ir_to_graphqomb(ir_circuit: IRCircuit, gates_yaml_path: str | None = None) -> Circuit:
     """Convert an intermediate representation circuit into a GraphQOMB circuit.
 
     Parameters
     ----------
     ir_circuit : ir.circuit.Circuit
         Intermediate representation circuit to convert.
+    gates_yaml_path : str | None, optional
+        Path to the gate mapping YAML file. If None, uses the default packaged gates.yaml.
+        This allows custom gate definitions to be honored during GraphQOMB conversion.
 
     Returns
     -------
@@ -183,10 +187,16 @@ def ir_to_graphqomb(ir_circuit: IRCircuit) -> Circuit:
     ValueError
         If the IR contains an unsupported gate or inconsistent operands.
     """
+    # Load builders from custom YAML if provided, otherwise use default
+    if gates_yaml_path is not None:
+        gate_builders = _load_gate_builders(gates_yaml_path)
+    else:
+        gate_builders = _DEFAULT_GATE_BUILDERS
+
     circuit = Circuit(ir_circuit.n_qubits)
     for op in ir_circuit.ops:
         op_name = op.name.upper()
-        builder = _GATE_BUILDERS.get(op_name)
+        builder = gate_builders.get(op_name)
         if builder is None:
             raise ValueError(f"Unsupported IR gate '{op.name}'.")
         gate = builder(op)
@@ -195,12 +205,16 @@ def ir_to_graphqomb(ir_circuit: IRCircuit) -> Circuit:
 
 
 def _ast_to_graphqomb(ast: ProgramAST, gates_yaml_path: str) -> Circuit:
-    """Convert an OpenQASM AST to a GraphQOMB circuit."""
+    """Convert an OpenQASM AST to a GraphQOMB circuit.
+
+    Uses the same gates.yaml for both IR lowering and GraphQOMB conversion,
+    ensuring custom gate definitions are honored throughout the pipeline.
+    """
     validate_program(ast)
     normalized_ast = normalize_program(ast)
     gate_mappings = load_gate_mappings(gates_yaml_path)
     ir_circuit = lower_to_ir(normalized_ast, gate_mappings)
-    return ir_to_graphqomb(ir_circuit)
+    return ir_to_graphqomb(ir_circuit, gates_yaml_path=gates_yaml_path)
 
 
 def qasm_to_graphqomb(qasm_text: str, gates_yaml_path: str) -> Circuit:
