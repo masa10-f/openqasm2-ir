@@ -589,7 +589,8 @@ class TestLowerToIR:
         mappings = load_gate_mappings(gates_yaml_path)
         circuit = lower_to_ir(ast, mappings)
         assert circuit.n_qubits == 1
-        assert len(circuit.ops) == 3  # h expands to 3 operations
+        assert len(circuit.ops) == 1  # h maps to native H gate
+        assert circuit.ops[0].name == "H"
 
     def test_lower_with_measurement(self, gates_yaml_path: str) -> None:
         """Lower a program with a measurement operation."""
@@ -760,7 +761,8 @@ class TestLowerToIR:
         mappings = load_gate_mappings(gates_yaml_path)
         circuit = lower_to_ir(ast, mappings)
         assert circuit.n_qubits == 2
-        assert len(circuit.ops) == 3  # h expands to 3 operations
+        assert len(circuit.ops) == 1  # h maps to native H gate
+        assert circuit.ops[0].name == "H"
         assert circuit.meas_map == [(0, 0)]
 
     def test_lower_invalid_mappings_dict_raises_error(self) -> None:

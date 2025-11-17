@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from ir.circuit import Circuit as IRCircuit
-from ir.circuit import Op as IROp
 from qasm2.errors import QasmError
 from qasm2.lower import load_gate_mappings, lower_to_ir
 from qasm2.normalize import normalize_program
@@ -135,91 +134,32 @@ def _report_qasm_error(err: QasmError) -> None:
     print(f"Error {err.code} at line {err.line}, col {err.col}: {err.message}", file=sys.stderr)
 
 
-def _ensure_qubits(op: IROp, expected: int) -> None:
-    if len(op.qubits) != expected:
-        raise ValueError(f"Gate '{op.name}' expects {expected} qubits but received {len(op.qubits)}.")
+def _convert_to_graphqomb(ir_circuit: IRCircuit, gates_yaml_path: str | None = None) -> GraphQOMBArtifact:
+    """Convert the intermediate representation to a GraphQOMB circuit.
 
+    This function delegates to the converter module which dynamically loads
+    gate builders from gates.yaml, providing a single source of truth for
+    gate conversion logic.
 
-def _ensure_params(op: IROp, expected: int) -> None:
-    if len(op.params) != expected:
-        raise ValueError(f"Gate '{op.name}' expects {expected} parameters but received {len(op.params)}.")
+    Parameters
+    ----------
+    ir_circuit : IRCircuit
+        The intermediate representation circuit to convert.
+    gates_yaml_path : str | None, optional
+        Path to the gate mapping YAML file. If provided, custom gate definitions
+        will be honored during conversion. If None, uses default packaged gates.
 
-
-def _convert_to_graphqomb(ir_circuit: IRCircuit) -> GraphQOMBArtifact:
-    """Convert the intermediate representation to a GraphQOMB circuit."""
+    Returns
+    -------
+    GraphQOMBArtifact
+        The converted GraphQOMB circuit with measurement map.
+    """
     try:
-        from graphqomb.circuit import Circuit as GraphCircuit
-        from graphqomb.gates import CCZ as GraphCCZ
-        from graphqomb.gates import CRx as GraphCRx
-        from graphqomb.gates import CRz as GraphCRz
-        from graphqomb.gates import CU3 as GraphCU3
-        from graphqomb.gates import CNOT as GraphCNOT
-        from graphqomb.gates import CZ as GraphCZ
-        from graphqomb.gates import Rx as GraphRx
-        from graphqomb.gates import Ry as GraphRy
-        from graphqomb.gates import Rz as GraphRz
-        from graphqomb.gates import SWAP as GraphSWAP
-        from graphqomb.gates import Toffoli as GraphToffoli
+        from graphqomb_adapter.converter import ir_to_graphqomb
     except ImportError as exc:  # pragma: no cover - handled at runtime
         raise ImportError("GraphQOMB must be installed to emit graphqomb format.") from exc
 
-    graph_circuit = GraphCircuit(ir_circuit.n_qubits)
-
-    for op in ir_circuit.ops:
-        name = op.name.upper()
-        if name == "RX":
-            _ensure_qubits(op, 1)
-            _ensure_params(op, 1)
-            gate = GraphRx(qubit=op.qubits[0], angle=float(op.params[0]))
-        elif name == "RY":
-            _ensure_qubits(op, 1)
-            _ensure_params(op, 1)
-            gate = GraphRy(qubit=op.qubits[0], angle=float(op.params[0]))
-        elif name == "RZ":
-            _ensure_qubits(op, 1)
-            _ensure_params(op, 1)
-            gate = GraphRz(qubit=op.qubits[0], angle=float(op.params[0]))
-        elif name == "CX":
-            _ensure_qubits(op, 2)
-            _ensure_params(op, 0)
-            gate = GraphCNOT(qubits=(op.qubits[0], op.qubits[1]))
-        elif name == "CZ":
-            _ensure_qubits(op, 2)
-            _ensure_params(op, 0)
-            gate = GraphCZ(qubits=(op.qubits[0], op.qubits[1]))
-        elif name == "SWAP":
-            _ensure_qubits(op, 2)
-            _ensure_params(op, 0)
-            gate = GraphSWAP(qubits=(op.qubits[0], op.qubits[1]))
-        elif name == "CRZ":
-            _ensure_qubits(op, 2)
-            _ensure_params(op, 1)
-            gate = GraphCRz(qubits=(op.qubits[0], op.qubits[1]), angle=float(op.params[0]))
-        elif name == "CRX":
-            _ensure_qubits(op, 2)
-            _ensure_params(op, 1)
-            gate = GraphCRx(qubits=(op.qubits[0], op.qubits[1]), angle=float(op.params[0]))
-        elif name == "CU3":
-            _ensure_qubits(op, 2)
-            _ensure_params(op, 3)
-            gate = GraphCU3(
-                qubits=(op.qubits[0], op.qubits[1]),
-                angle1=float(op.params[0]),
-                angle2=float(op.params[1]),
-                angle3=float(op.params[2]),
-            )
-        elif name == "CCX":
-            _ensure_qubits(op, 3)
-            _ensure_params(op, 0)
-            gate = GraphToffoli(qubits=list(op.qubits))
-        elif name == "CCZ":
-            _ensure_qubits(op, 3)
-            _ensure_params(op, 0)
-            gate = GraphCCZ(qubits=list(op.qubits))
-        else:  # pragma: no cover - depends on gate mappings
-            raise ValueError(f"Unsupported gate '{op.name}' for GraphQOMB conversion.")
-        graph_circuit.apply_macro_gate(gate)
-
+    graph_circuit = ir_to_graphqomb(ir_circuit, gates_yaml_path=gates_yaml_path)
     meas_map = list(ir_circuit.meas_map) if ir_circuit.meas_map is not None else None
     return GraphQOMBArtifact(circuit=graph_circuit, meas_map=meas_map)
 
@@ -304,7 +244,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if output_format == "json":
             _write_json(circuit, output_path)
         else:
-            artifact = _convert_to_graphqomb(circuit)
+            artifact = _convert_to_graphqomb(circuit, gates_yaml_path=gates_path)
             _write_graphqomb(artifact, output_path)
     except ImportError as exc:
         print(f"GraphQOMB conversion unavailable: {exc}", file=sys.stderr)

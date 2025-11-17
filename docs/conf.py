@@ -1,6 +1,5 @@
 """Sphinx configuration file for qasm2graphqomb documentation."""
 
-import os
 import sys
 from pathlib import Path
 
