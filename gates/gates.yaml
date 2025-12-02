@@ -90,6 +90,9 @@ mappings:
   tdg:
     params: []
     map: {op: TDG, qubits: ["q0"], args: []}
+  u3:
+    params: [theta, phi, lam]
+    map: {op: U3, qubits: ["q0"], args: ["{theta}", "{phi}", "{lam}"]}
   sx:
     params: []
     expand:

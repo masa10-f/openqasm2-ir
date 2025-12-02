@@ -156,13 +156,9 @@ def normalize_builtin_gate(call: GateCallAST) -> List[GateCallAST]:
             _clone_gate_call(call, name="rz", params=[lam - half_pi]),
         ]
     if name == "u3":
+        # u3 is natively supported in GraphQOMB, pass through without decomposition
         _assert_arity(call, 3)
-        theta, phi, lam = call.params
-        return [
-            _clone_gate_call(call, name="rz", params=[lam]),
-            _clone_gate_call(call, name="rx", params=[theta]),
-            _clone_gate_call(call, name="rz", params=[phi]),
-        ]
+        return [_clone_gate_call(call)]
     if name == "p":
         _assert_arity(call, 1)
         return [_clone_gate_call(call, name="rz")]
