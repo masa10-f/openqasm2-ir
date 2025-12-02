@@ -8,6 +8,7 @@ qasm2graphqomb Documentation
    :caption: Contents:
 
    tutorial
+   optimizer
    api
    modules
 
@@ -16,6 +17,7 @@ Features
 
 * **OpenQASM 2.0 Parser**: Full OpenQASM 2.0 syntax support
 * **Intermediate Representation (IR)**: Efficient representation and manipulation of quantum circuits
+* **QASM Optimizer**: Circuit optimization using pytket with configurable optimization levels
 * **GraphQOMB Integration**: Seamless conversion to GraphQOMB
 * **Type Safety**: Reliable development with static type checking
 * **CLI Tools**: Easy command-line usage
