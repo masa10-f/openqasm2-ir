@@ -64,12 +64,12 @@ _GATE_CLASS_MAP = {
 }
 
 
-def _load_gate_specs(yaml_path: str | None = None) -> dict:
+def _load_gate_specs(yaml_path: str | Path | None = None) -> dict:
     """Load gate specifications from gates.yaml.
 
     Parameters
     ----------
-    yaml_path : str | None
+    yaml_path : str | Path | None
         Path to gates.yaml file. If None, uses default path.
 
     Returns
@@ -161,9 +161,28 @@ def _load_gate_builders(yaml_path: str | None = None) -> dict[str, GateFactory]:
     return builders
 
 
-# Load gate builders dynamically from gates.yaml at module initialization
-# This serves as the default when no custom gates.yaml is provided
-_DEFAULT_GATE_BUILDERS: dict[str, GateFactory] = _load_gate_builders()
+# Lazily loaded default gate builders to avoid FileNotFoundError at import time
+# when gates/gates.yaml is not available (e.g., in wheel-installed environments)
+_DEFAULT_GATE_BUILDERS: dict[str, GateFactory] | None = None
+
+
+def _get_default_gate_builders() -> dict[str, GateFactory]:
+    """Get the default gate builders, loading them lazily on first use.
+
+    Returns
+    -------
+    dict[str, GateFactory]
+        Dictionary mapping gate names to builder functions.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the default gates.yaml file is not found.
+    """
+    global _DEFAULT_GATE_BUILDERS
+    if _DEFAULT_GATE_BUILDERS is None:
+        _DEFAULT_GATE_BUILDERS = _load_gate_builders()
+    return _DEFAULT_GATE_BUILDERS
 
 
 def ir_to_graphqomb(ir_circuit: IRCircuit, gates_yaml_path: str | None = None) -> Circuit:
@@ -191,7 +210,7 @@ def ir_to_graphqomb(ir_circuit: IRCircuit, gates_yaml_path: str | None = None) -
     if gates_yaml_path is not None:
         gate_builders = _load_gate_builders(gates_yaml_path)
     else:
-        gate_builders = _DEFAULT_GATE_BUILDERS
+        gate_builders = _get_default_gate_builders()
 
     circuit = Circuit(ir_circuit.n_qubits)
     for op in ir_circuit.ops:
