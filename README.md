@@ -11,6 +11,7 @@ Custom IR representation for OpenQASM 2.0
 - **OpenQASM 2.0 Parser**: Full OpenQASM 2.0 syntax support
 - **Intermediate Representation (IR)**: Efficient representation and manipulation of quantum circuits
 - **GraphQOMB Integration**: Seamless conversion to GraphQOMB
+- **QASM Optimization**: Circuit optimization using pytket
 - **Type Safety**: Reliable development with static type checking
 - **CLI Tools**: Easy command-line usage
 
@@ -21,6 +22,8 @@ pip install qasm2graphqomb
 ```
 
 ## Quick Start
+
+### Parsing and IR Conversion
 
 ```python
 from qasm2.parser import parse_qasm_file
@@ -36,6 +39,20 @@ circuit = lower_program(ast)
 print(f"Qubits: {circuit.n_qubits}")
 print(f"Operations: {len(circuit.ops)}")
 ```
+
+### QASM Optimization with pytket
+
+The optimizer is included by default. You can use it immediately after installation:
+
+```bash
+# Optimize a QASM file
+tket-optimize-qasm input.qasm output_optimized.qasm
+
+# Or use as a Python module
+python tket_opt_qasm.py input.qasm output_optimized.qasm
+```
+
+See [optimizer/README.md](optimizer/README.md) for detailed usage and examples.
 
 ## Documentation
 
@@ -74,6 +91,19 @@ pyright
 # Linting
 ruff check .
 ```
+
+## Optional Dependencies
+
+- **dev**: Install development tools (pytest, mypy, pyright, ruff)
+  ```bash
+  pip install -e ".[dev]"
+  ```
+- **docs**: Install documentation dependencies (Sphinx)
+  ```bash
+  pip install -e ".[docs]"
+  ```
+
+Note: The QASM optimizer (pytket) is now included by default.
 
 ## License
 
