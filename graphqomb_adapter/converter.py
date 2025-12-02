@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 
+import yaml
 from graphqomb.circuit import Circuit
 from graphqomb import gates
 
@@ -37,94 +39,162 @@ def _require_params(op: Op, expected: int) -> tuple[float, ...]:
     return tuple(op.params)
 
 
-def _build_rx(op: Op) -> gates.Rx:
-    qubit = _require_qubits(op, 1)[0]
-    angle = _require_params(op, 1)[0]
-    return gates.Rx(qubit=qubit, angle=angle)
-
-
-def _build_ry(op: Op) -> gates.Ry:
-    qubit = _require_qubits(op, 1)[0]
-    angle = _require_params(op, 1)[0]
-    return gates.Ry(qubit=qubit, angle=angle)
-
-
-def _build_rz(op: Op) -> gates.Rz:
-    qubit = _require_qubits(op, 1)[0]
-    angle = _require_params(op, 1)[0]
-    return gates.Rz(qubit=qubit, angle=angle)
-
-
-def _build_cx(op: Op) -> gates.CNOT:
-    control, target = _require_qubits(op, 2)
-    _require_params(op, 0)
-    return gates.CNOT(qubits=(control, target))
-
-
-def _build_cz(op: Op) -> gates.CZ:
-    qubits = _require_qubits(op, 2)
-    _require_params(op, 0)
-    return gates.CZ(qubits=qubits)
-
-
-def _build_swap(op: Op) -> gates.SWAP:
-    qubits = _require_qubits(op, 2)
-    _require_params(op, 0)
-    return gates.SWAP(qubits=qubits)
-
-
-def _build_crz(op: Op) -> gates.CRz:
-    control, target = _require_qubits(op, 2)
-    angle = _require_params(op, 1)[0]
-    return gates.CRz(qubits=(control, target), angle=angle)
-
-
-def _build_crx(op: Op) -> gates.CRx:
-    control, target = _require_qubits(op, 2)
-    angle = _require_params(op, 1)[0]
-    return gates.CRx(qubits=(control, target), angle=angle)
-
-
-def _build_cu3(op: Op) -> gates.CU3:
-    qubits = _require_qubits(op, 2)
-    theta, phi, lam = _require_params(op, 3)
-    return gates.CU3(qubits=qubits, angle1=theta, angle2=phi, angle3=lam)
-
-
-def _build_ccx(op: Op) -> gates.Toffoli:
-    qubits = list(_require_qubits(op, 3))
-    _require_params(op, 0)
-    return gates.Toffoli(qubits=qubits)
-
-
-def _build_ccz(op: Op) -> gates.CCZ:
-    qubits = list(_require_qubits(op, 3))
-    _require_params(op, 0)
-    return gates.CCZ(qubits=qubits)
-
-
-_GATE_BUILDERS: dict[str, GateFactory] = {
-    "RX": _build_rx,
-    "RY": _build_ry,
-    "RZ": _build_rz,
-    "CX": _build_cx,
-    "CZ": _build_cz,
-    "SWAP": _build_swap,
-    "CRZ": _build_crz,
-    "CRX": _build_crx,
-    "CU3": _build_cu3,
-    "CCX": _build_ccx,
-    "CCZ": _build_ccz,
+# Mapping from gate names to GraphQOMB gate classes
+# Some gate names in IR differ from GraphQOMB class names
+_GATE_CLASS_MAP = {
+    "RX": gates.Rx,
+    "RY": gates.Ry,
+    "RZ": gates.Rz,
+    "X": gates.X,
+    "Y": gates.Y,
+    "Z": gates.Z,
+    "H": gates.H,
+    "S": gates.S,
+    "T": gates.T,
+    "TDG": gates.Tdg,
+    "U3": gates.U3,
+    "CX": gates.CNOT,  # CX maps to CNOT
+    "CZ": gates.CZ,
+    "SWAP": gates.SWAP,
+    "CRZ": gates.CRz,
+    "CRX": gates.CRx,
+    "CU3": gates.CU3,
+    "CCX": gates.Toffoli,  # CCX maps to Toffoli
+    "CCZ": gates.CCZ,
 }
 
 
-def ir_to_graphqomb(ir_circuit: IRCircuit) -> Circuit:
+def _load_gate_specs(yaml_path: str | Path | None = None) -> dict:
+    """Load gate specifications from gates.yaml.
+
+    Parameters
+    ----------
+    yaml_path : str | Path | None
+        Path to gates.yaml file. If None, uses default path.
+
+    Returns
+    -------
+    dict
+        Dictionary of gate specifications with arity and params.
+    """
+    if yaml_path is None:
+        # Default path relative to this module
+        current_dir = Path(__file__).parent
+        yaml_path = current_dir.parent / "gates" / "gates.yaml"
+
+    with open(yaml_path) as f:
+        data = yaml.safe_load(f)
+
+    return data.get("primitives", {})
+
+
+def _create_gate_builder(gate_name: str, gate_spec: dict, gate_class: type) -> GateFactory:
+    """Create a gate builder function from YAML specification.
+
+    Parameters
+    ----------
+    gate_name : str
+        Name of the gate (e.g., "RX", "H").
+    gate_spec : dict
+        Gate specification from YAML with 'arity' and 'params' keys.
+    gate_class : type
+        GraphQOMB gate class to instantiate.
+
+    Returns
+    -------
+    GateFactory
+        Factory function that creates gate instances from IR operations.
+    """
+    arity = gate_spec["arity"]
+    param_names = gate_spec.get("params", [])
+    num_params = len(param_names)
+
+    def builder(op: Op) -> gates.Gate:
+        qubits = _require_qubits(op, arity)
+        params = _require_params(op, num_params)
+
+        # Build gate based on arity and parameter count
+        if arity == 1:
+            qubit = qubits[0]
+            if num_params == 0:
+                return gate_class(qubit=qubit)
+            elif num_params == 1:
+                return gate_class(qubit=qubit, angle=params[0])
+            elif num_params == 3:  # U3 gate
+                return gate_class(qubit=qubit, angle1=params[0], angle2=params[1], angle3=params[2])
+        elif arity == 2:
+            if num_params == 0:
+                return gate_class(qubits=qubits)
+            elif num_params == 1:
+                return gate_class(qubits=qubits, angle=params[0])
+            elif num_params == 3:  # CU3 gate
+                return gate_class(qubits=qubits, angle1=params[0], angle2=params[1], angle3=params[2])
+        elif arity == 3:
+            return gate_class(qubits=list(qubits))
+
+        raise ValueError(f"Unsupported gate configuration: {gate_name} with arity={arity}, params={num_params}")
+
+    return builder
+
+
+def _load_gate_builders(yaml_path: str | None = None) -> dict[str, GateFactory]:
+    """Load gate builders dynamically from gates.yaml.
+
+    Parameters
+    ----------
+    yaml_path : str | None
+        Path to gates.yaml file. If None, uses default path.
+
+    Returns
+    -------
+    dict[str, GateFactory]
+        Dictionary mapping gate names to builder functions.
+    """
+    gate_specs = _load_gate_specs(yaml_path)
+    builders = {}
+
+    for gate_name, gate_spec in gate_specs.items():
+        if gate_name in _GATE_CLASS_MAP:
+            gate_class = _GATE_CLASS_MAP[gate_name]
+            builders[gate_name] = _create_gate_builder(gate_name, gate_spec, gate_class)
+
+    return builders
+
+
+# Lazily loaded default gate builders to avoid FileNotFoundError at import time
+# when gates/gates.yaml is not available (e.g., in wheel-installed environments)
+_DEFAULT_GATE_BUILDERS: dict[str, GateFactory] | None = None
+
+
+def _get_default_gate_builders() -> dict[str, GateFactory]:
+    """Get the default gate builders, loading them lazily on first use.
+
+    Returns
+    -------
+    dict[str, GateFactory]
+        Dictionary mapping gate names to builder functions.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the default gates.yaml file is not found.
+    """
+    global _DEFAULT_GATE_BUILDERS
+    if _DEFAULT_GATE_BUILDERS is None:
+        _DEFAULT_GATE_BUILDERS = _load_gate_builders()
+    return _DEFAULT_GATE_BUILDERS
+
+
+def ir_to_graphqomb(ir_circuit: IRCircuit, gates_yaml_path: str | None = None) -> Circuit:
     """Convert an intermediate representation circuit into a GraphQOMB circuit.
 
     Parameters
     ----------
     ir_circuit : ir.circuit.Circuit
         Intermediate representation circuit to convert.
+    gates_yaml_path : str | None, optional
+        Path to the gate mapping YAML file. If None, uses the default packaged gates.yaml.
+        This allows custom gate definitions to be honored during GraphQOMB conversion.
 
     Returns
     -------
@@ -136,10 +206,16 @@ def ir_to_graphqomb(ir_circuit: IRCircuit) -> Circuit:
     ValueError
         If the IR contains an unsupported gate or inconsistent operands.
     """
+    # Load builders from custom YAML if provided, otherwise use default
+    if gates_yaml_path is not None:
+        gate_builders = _load_gate_builders(gates_yaml_path)
+    else:
+        gate_builders = _get_default_gate_builders()
+
     circuit = Circuit(ir_circuit.n_qubits)
     for op in ir_circuit.ops:
         op_name = op.name.upper()
-        builder = _GATE_BUILDERS.get(op_name)
+        builder = gate_builders.get(op_name)
         if builder is None:
             raise ValueError(f"Unsupported IR gate '{op.name}'.")
         gate = builder(op)
@@ -148,12 +224,16 @@ def ir_to_graphqomb(ir_circuit: IRCircuit) -> Circuit:
 
 
 def _ast_to_graphqomb(ast: ProgramAST, gates_yaml_path: str) -> Circuit:
-    """Convert an OpenQASM AST to a GraphQOMB circuit."""
+    """Convert an OpenQASM AST to a GraphQOMB circuit.
+
+    Uses the same gates.yaml for both IR lowering and GraphQOMB conversion,
+    ensuring custom gate definitions are honored throughout the pipeline.
+    """
     validate_program(ast)
     normalized_ast = normalize_program(ast)
     gate_mappings = load_gate_mappings(gates_yaml_path)
     ir_circuit = lower_to_ir(normalized_ast, gate_mappings)
-    return ir_to_graphqomb(ir_circuit)
+    return ir_to_graphqomb(ir_circuit, gates_yaml_path=gates_yaml_path)
 
 
 def qasm_to_graphqomb(qasm_text: str, gates_yaml_path: str) -> Circuit:

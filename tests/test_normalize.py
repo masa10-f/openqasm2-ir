@@ -31,9 +31,7 @@ from qasm2.normalize import (
 )
 
 
-def _gate_def_call(
-    name: str, params: list[Any], qargs: list[QRef], line: int = 1, col: int = 1
-) -> GateCallAST:
+def _gate_def_call(name: str, params: list[Any], qargs: list[QRef], line: int = 1, col: int = 1) -> GateCallAST:
     """Helper to create GateCallAST for use in gate definitions with symbolic params."""
     return GateCallAST(name=name, params=params, qargs=qargs, line=line, col=col)  # type: ignore[arg-type]
 
@@ -299,8 +297,11 @@ class TestBuiltinGateNormalization:
         assert normalized[1].params[0] == pytest.approx(half_pi)
         assert normalized[2].params[0] == pytest.approx(lam - half_pi)
 
-    def test_u3_decomposition(self) -> None:
-        """Test decomposition of u3 gate."""
+    def test_u3_passthrough(self) -> None:
+        """Test that u3 gate passes through without decomposition.
+
+        u3 is natively supported in GraphQOMB, so it should not be decomposed.
+        """
         theta = 0.5
         phi = 1.0
         lam = 1.5
@@ -314,16 +315,14 @@ class TestBuiltinGateNormalization:
 
         normalized = normalize_builtin_gate(call)
 
-        # u3 should decompose into rz-rx-rz
-        assert len(normalized) == 3
-        assert normalized[0].name == "rz"
-        assert normalized[1].name == "rx"
-        assert normalized[2].name == "rz"
+        # u3 should pass through as a single gate (native support in GraphQOMB)
+        assert len(normalized) == 1
+        assert normalized[0].name == "u3"
 
-        # Check parameter assignments
-        assert normalized[0].params[0] == lam
-        assert normalized[1].params[0] == theta
-        assert normalized[2].params[0] == phi
+        # Check parameters are preserved
+        assert normalized[0].params[0] == theta
+        assert normalized[0].params[1] == phi
+        assert normalized[0].params[2] == lam
 
     def test_p_to_rz(self) -> None:
         """Test normalization of p gate to rz."""
@@ -760,8 +759,11 @@ class TestProgramNormalization:
         assert normalized.body[0].name == "rz"
         assert normalized.body[0].params == [1.5]
 
-    def test_program_with_u3_decomposition(self) -> None:
-        """Test normalization of program with u3 gates."""
+    def test_program_with_u3_passthrough(self) -> None:
+        """Test normalization of program with u3 gates.
+
+        u3 is natively supported in GraphQOMB, so it should pass through.
+        """
         program = ProgramAST(
             version="2.0",
             qregs=[("q", 1)],
@@ -772,14 +774,11 @@ class TestProgramNormalization:
 
         normalized = normalize_program(program)
 
-        # u3 should expand to rz-rx-rz
-        assert len(normalized.body) == 3
+        # u3 should pass through as a single gate (native support in GraphQOMB)
+        assert len(normalized.body) == 1
         assert isinstance(normalized.body[0], GateCallAST)
-        assert isinstance(normalized.body[1], GateCallAST)
-        assert isinstance(normalized.body[2], GateCallAST)
-        assert normalized.body[0].name == "rz"
-        assert normalized.body[1].name == "rx"
-        assert normalized.body[2].name == "rz"
+        assert normalized.body[0].name == "u3"
+        assert normalized.body[0].params == [0.5, 1.0, 1.5]
 
     def test_program_metadata_preservation(self) -> None:
         """Test that program metadata is preserved during normalization."""

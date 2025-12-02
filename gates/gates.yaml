@@ -10,6 +10,30 @@ primitives:
   RZ:
     arity: 1
     params: [phi]
+  X:
+    arity: 1
+    params: []
+  Y:
+    arity: 1
+    params: []
+  Z:
+    arity: 1
+    params: []
+  H:
+    arity: 1
+    params: []
+  S:
+    arity: 1
+    params: []
+  T:
+    arity: 1
+    params: []
+  TDG:
+    arity: 1
+    params: []
+  U3:
+    arity: 1
+    params: [theta, phi, lam]
   CX:
     arity: 2
     params: []
@@ -47,34 +71,28 @@ mappings:
     map: {op: RZ, qubits: ["q0"], args: ["{phi}"]}
   h:
     params: []
-    expand:
-      - {op: RZ, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
-      - {op: RY, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
-      - {op: RZ, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 rotation
+    map: {op: H, qubits: ["q0"], args: []}
   x:
     params: []
-    expand:
-      - {op: RX, qubits: ["q0"], args: ["3.141592653589793"]}  # pi rotation
+    map: {op: X, qubits: ["q0"], args: []}
   y:
     params: []
-    expand:
-      - {op: RY, qubits: ["q0"], args: ["3.141592653589793"]}  # pi rotation
+    map: {op: Y, qubits: ["q0"], args: []}
   z:
     params: []
-    expand:
-      - {op: RZ, qubits: ["q0"], args: ["3.141592653589793"]}  # pi rotation
+    map: {op: Z, qubits: ["q0"], args: []}
   s:
     params: []
-    expand:
-      - {op: RZ, qubits: ["q0"], args: ["1.5707963267948966"]}  # pi/2 phase
+    map: {op: S, qubits: ["q0"], args: []}
   t:
     params: []
-    expand:
-      - {op: RZ, qubits: ["q0"], args: ["0.7853981633974483"]}  # pi/4 phase
+    map: {op: T, qubits: ["q0"], args: []}
   tdg:
     params: []
-    expand:
-      - {op: RZ, qubits: ["q0"], args: ["-0.7853981633974483"]}  # -pi/4 phase
+    map: {op: TDG, qubits: ["q0"], args: []}
+  u3:
+    params: [theta, phi, lam]
+    map: {op: U3, qubits: ["q0"], args: ["{theta}", "{phi}", "{lam}"]}
   sx:
     params: []
     expand:
