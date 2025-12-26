@@ -74,7 +74,7 @@ class QasmTransformer(Transformer):
         return ProgramAST(
             version=self._version,
             includes=list(self._includes),
-            qregs=list(self._qregs),
+            qregs=[(name, self._qreg_sizes[name]) for name, _ in self._qregs],
             cregs=list(self._cregs),
             gate_defs=dict(self._gate_defs),
             body=list(self._body),
@@ -88,6 +88,9 @@ class QasmTransformer(Transformer):
         self._gate_defs: dict[str, GateDefAST] = {}
         self._body: List[GateCallAST | MeasureAST | BarrierAST] = []
         self._qreg_sizes: dict[str, int] = {}
+        self._qreg_declared_sizes: dict[str, int] = {}
+        self._qreg_reset_map: dict[str, dict[int, int]] = {}
+        self._qreg_next_reset_idx: dict[str, int] = {}
         self._creg_sizes: dict[str, int] = {}
         self._gate_context: list[_GateContext] = []
 
@@ -165,6 +168,9 @@ class QasmTransformer(Transformer):
             line, col = name_token.line, name_token.column
             raise QasmError("E402", f"Duplicate quantum register '{name}'.", line, col)
         self._qreg_sizes[name] = size
+        self._qreg_declared_sizes[name] = size
+        self._qreg_reset_map[name] = {}
+        self._qreg_next_reset_idx[name] = size
         self._qregs.append((name, size))
 
     def _visit_creg(self, node: Tree) -> None:
@@ -271,12 +277,48 @@ class QasmTransformer(Transformer):
                 return self._visit_barrier(child)
             if child.data == "measure":
                 return self._visit_measure(child)
-            if child.data in {"reset_stmt", "if_stmt"}:
+            if child.data == "reset_stmt":
+                self._visit_reset_stmt(child)
+                return None
+            if child.data == "if_stmt":
                 line, col = _node_location(child)
                 raise QasmError("E401", f"Unsupported statement '{child.data}'.", line, col)
             line, col = _node_location(child)
             raise QasmError("E401", f"Unsupported statement '{child.data}'.", line, col)
         return None
+
+    def _visit_reset_stmt(self, node: Tree) -> None:
+        qarg = _find_tree(node.children, {"qarg"})
+        if qarg is None:
+            line, col = _node_location(node)
+            raise QasmError("E401", "Malformed reset statement.", line, col)
+
+        name, index, line, col = self._extract_reference(qarg)
+        declared_size = self._qreg_declared_sizes.get(name)
+        if declared_size is None:
+            raise QasmError("E402", f"Unknown quantum register '{name}'.", line, col)
+
+        if index is None:
+            for idx in range(declared_size):
+                self._remap_after_reset(name, idx, line, col)
+        else:
+            if index < 0 or index >= declared_size:
+                raise QasmError(
+                    "E402",
+                    f"Qubit index {index} out of range for register '{name}'.",
+                    line,
+                    col,
+                )
+            self._remap_after_reset(name, index, line, col)
+
+    def _remap_after_reset(self, reg: str, original_idx: int, line: int, col: int) -> None:
+        next_idx = self._qreg_next_reset_idx.get(reg)
+        if next_idx is None:
+            raise QasmError("E402", f"Unknown quantum register '{reg}'.", line, col)
+
+        self._qreg_reset_map[reg][original_idx] = next_idx
+        self._qreg_next_reset_idx[reg] = next_idx + 1
+        self._qreg_sizes[reg] = max(self._qreg_sizes.get(reg, 0), next_idx + 1)
 
     def _parse_gate_call_like(self, node: Tree) -> GateCallAST:
         name_token = _find_first_identifier(node.children)
@@ -363,11 +405,13 @@ class QasmTransformer(Transformer):
             if name not in ctx.qargs:
                 raise QasmError("E402", f"Unknown gate argument '{name}' in gate '{ctx.name}'.", line, col)
             return QRef(reg=name, idx=index, line=line, col=col)
-        size = self._qreg_sizes.get(name)
-        if size is None:
+        declared_size = self._qreg_declared_sizes.get(name)
+        if declared_size is None:
             raise QasmError("E402", f"Unknown quantum register '{name}'.", line, col)
-        if index is not None and (index < 0 or index >= size):
+        if index is not None and (index < 0 or index >= declared_size):
             raise QasmError("E402", f"Qubit index {index} out of range for register '{name}'.", line, col)
+        if index is not None:
+            index = self._qreg_reset_map.get(name, {}).get(index, index)
         return QRef(reg=name, idx=index, line=line, col=col)
 
     def _build_cref(self, node: Tree) -> CRef:
